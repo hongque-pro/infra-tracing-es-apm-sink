@@ -1,0 +1,80 @@
+package main
+
+import (
+	"fmt"
+	"github.com/spf13/viper"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configmodels"
+	"os"
+	"regexp"
+	"strings"
+)
+
+var defaultConfig = `
+receivers:
+  kafka:
+    protocol_version: 2.0.0
+    brokers: ${KAFKA_SERVER:localhost:9092}
+    topic: ${KAFKA_TOPIC:telemetry-spans}
+    encoding: otlp_proto
+    group_id: ${KAFKA_GROUP_ID:infra-tracing-sink}
+    client_id: ${KAFKA_CLIENT_ID:infra-tracing-sink}
+
+exporters:
+  elastic:
+    apm_server_url: ${ES_APM_URL}
+    secret_token: "hunter2"
+  logging:
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [kafka]
+      exporters: [logging]
+      processors: [batch]
+`
+
+func staticConfigFactory(v *viper.Viper, factories component.Factories) (*configmodels.Config, error) {
+	//参考：https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver/kafkareceiver
+	v.SetConfigType("yml")
+	resultYml := parseYml(defaultConfig)
+	var configReader = strings.NewReader(resultYml)
+	err := v.ReadConfig(configReader)
+	if err == nil {
+		return config.Load(v, factories)
+	} else {
+		return nil, err
+	}
+}
+
+func parseYml(content string) string {
+	r := regexp.MustCompile(`\$\{([0-9a-zA-Z_]+)(:\s*(.*))?\}`)
+	matches := r.FindAllStringSubmatch(content, -1)
+
+	var actualContent = content
+	var errBuilder = &strings.Builder{}
+	for _, m := range matches {
+		if len(m) == 4 {
+			subStr := m[0]
+			envName := m[1]
+			defaultValue := strings.TrimSpace(m[3])
+			v := os.Getenv(envName)
+			if strings.TrimSpace(v) == "" && defaultValue != "" {
+				v = defaultValue
+			}
+			if strings.TrimSpace(v) == "" {
+				e := fmt.Sprintf("The environment variables '%s' is missing, but config file required it", envName)
+				errBuilder.WriteString(fmt.Sprintln(e))
+			}
+			actualContent = strings.Replace(actualContent, subStr, v, 1)
+		}
+	}
+	if errBuilder.Len() > 0 {
+		log.Warn(errBuilder.String())
+	}
+	return actualContent
+}
