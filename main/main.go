@@ -34,7 +34,7 @@ func main() {
 	configFile := flag.String("config", "", "Path to the config file")
 	if configFile == nil || strings.TrimSpace(*configFile) == "" {
 		parameters.ConfigFactory = staticConfigFactory
-		log.Info("Embedded configured:\n", settings)
+		log.Info("Embedded configured (you can use --config [config file]) :\n", settings)
 	}
 
 	app, err := service.New(*parameters)
