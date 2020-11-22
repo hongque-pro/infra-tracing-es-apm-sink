@@ -115,5 +115,5 @@ func newCore(format LogFormat, ws zapcore.WriteSyncer, level zapcore.Level) zapc
 		encoder = zapcore.NewConsoleEncoder(encCfg)
 	}
 
-	return zapcore.NewCore(encoder, ws, zap.NewAtomicLevelAt(zapcore.Level(level)))
+	return zapcore.NewCore(encoder, ws, zap.NewAtomicLevelAt(level))
 }

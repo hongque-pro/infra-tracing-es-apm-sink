@@ -43,7 +43,7 @@ service:
 func staticConfigFactory(v *viper.Viper, factories component.Factories) (*configmodels.Config, error) {
 	//参考：https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver/kafkareceiver
 	v.SetConfigType("yml")
-	resultYml := parseYml(defaultConfig)
+	resultYml := parseYml()
 	var configReader = strings.NewReader(resultYml)
 	err := v.ReadConfig(configReader)
 	if err == nil {
@@ -55,7 +55,7 @@ func staticConfigFactory(v *viper.Viper, factories component.Factories) (*config
 }
 
 func loadYml() (map[string]interface{}, error) {
-	content := parseYml(defaultConfig)
+	content := parseYml()
 	var settings = make(map[string]interface{})
 	buf := new(bytes.Buffer)
 	reader := strings.NewReader(content)
@@ -63,12 +63,12 @@ func loadYml() (map[string]interface{}, error) {
 		if err = yaml.Unmarshal(buf.Bytes(), &settings); err != nil {
 			return nil, err
 		}
-
 	}
 	return settings, nil
 }
 
-func parseYml(content string) string {
+func parseYml() string {
+	var content = defaultConfig
 	r := regexp.MustCompile(`\$\{([0-9a-zA-Z_]+)(:\s*(.*))?\}`)
 	matches := r.FindAllStringSubmatch(content, -1)
 

@@ -3,6 +3,7 @@ package logging
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"os"
 	"sync"
 )
 
@@ -12,9 +13,45 @@ var loggerMutex sync.RWMutex // guards access to global logger state
 var loggers = make(map[string]*zap.SugaredLogger)
 
 var levels = make(map[string]zap.AtomicLevel)
-var defaultLevel zapcore.Level = zapcore.WarnLevel
+var defaultLevel zapcore.Level = zapcore.InfoLevel
+var output = zapcore.Lock(os.Stdout)
 
-var logCore = &lockedMultiCore{}
+var logCore = newCore(PlaintextOutput, output, defaultLevel)
+
+/**
+func newLogger(options []zap.Option) (*zap.Logger, error) {
+	var level zapcore.Level
+	err := (&level).UnmarshalText([]byte(*loggerLevelPtr))
+	if err != nil {
+		return nil, err
+	}
+
+	conf := zap.NewProductionConfig()
+
+	// Use logger profile if set on command line before falling back
+	// to default based on build type.
+	switch *loggerProfilePtr {
+	case "dev":
+		conf = zap.NewDevelopmentConfig()
+	case "prod":
+		conf = zap.NewProductionConfig()
+	default:
+		if version.IsDevBuild() {
+			conf = zap.NewDevelopmentConfig()
+		}
+	}
+
+	conf.Encoding = *loggerFormatPtr
+	if conf.Encoding == "console" {
+		// Human-readable timestamps for console format of logs.
+		conf.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
+
+	conf.Level.SetLevel(level)
+	return conf.Build(options...)
+}
+
+*/
 
 func GetLogger(name string) *zap.SugaredLogger {
 	loggerMutex.Lock()
@@ -22,6 +59,7 @@ func GetLogger(name string) *zap.SugaredLogger {
 	log, ok := loggers[name]
 	if !ok {
 		levels[name] = zap.NewAtomicLevelAt(defaultLevel)
+
 		log = zap.New(logCore).
 			WithOptions(zap.IncreaseLevel(levels[name])).
 			Named(name).
