@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/hongque-pro/infra-tracing-es-apm-sink/logging"
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/service"
 
@@ -12,6 +13,12 @@ import (
 var log = logging.GetLogger("tracing-es-apm-sink")
 
 func main() {
+
+	settings, err := loadYml()
+	if err == nil {
+		configName := ""
+		flag.StringVar(&configName, "metrics-addr", cast.ToString(settings["metrics-addr"]), "metrics address")
+	}
 
 	factories, err := components()
 	if err != nil {

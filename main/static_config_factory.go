@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configmodels"
+	"gopkg.in/yaml.v3"
 	"os"
 	"regexp"
 	"strings"
@@ -15,7 +17,7 @@ var defaultConfig = `
 receivers:
   kafka:
     protocol_version: 2.0.0
-    brokers: ${KAFKA_SERVER:localhost:9092}
+    brokers: ${KAFKA_SERVER:127.0.0.1:9092}
     topic: ${KAFKA_TOPIC:telemetry-spans}
     encoding: otlp_proto
     group_id: ${KAFKA_GROUP_ID:infra-tracing-sink}
@@ -23,7 +25,7 @@ receivers:
 
 exporters:
   elastic:
-    apm_server_url: ${ES_APM_URL}
+    apm_server_url: ${ES_APM_URL:http://127.0.0.1:18200}
     secret_token: "hunter2"
   logging:
 
@@ -34,7 +36,7 @@ service:
   pipelines:
     traces:
       receivers: [kafka]
-      exporters: [logging]
+      exporters: [logging,elastic]
       processors: [batch]
 `
 
@@ -49,6 +51,21 @@ func staticConfigFactory(v *viper.Viper, factories component.Factories) (*config
 	} else {
 		return nil, err
 	}
+
+}
+
+func loadYml() (map[string]interface{}, error) {
+	content := parseYml(defaultConfig)
+	var settings = make(map[string]interface{})
+	buf := new(bytes.Buffer)
+	reader := strings.NewReader(content)
+	if _, err := buf.ReadFrom(reader); err == nil {
+		if err = yaml.Unmarshal(buf.Bytes(), &settings); err != nil {
+			return nil, err
+		}
+
+	}
+	return settings, nil
 }
 
 func parseYml(content string) string {
