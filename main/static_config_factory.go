@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configmodels"
-	"gopkg.in/yaml.v3"
 	"os"
 	"regexp"
 	"strings"
@@ -54,17 +52,13 @@ func staticConfigFactory(v *viper.Viper, factories component.Factories) (*config
 
 }
 
-func loadYml() (map[string]interface{}, error) {
-	content := parseYml()
-	var settings = make(map[string]interface{})
-	buf := new(bytes.Buffer)
-	reader := strings.NewReader(content)
-	if _, err := buf.ReadFrom(reader); err == nil {
-		if err = yaml.Unmarshal(buf.Bytes(), &settings); err != nil {
-			return nil, err
-		}
-	}
-	return settings, nil
+func loadYml() (*viper.Viper, error) {
+	v := viper.New()
+	v.SetConfigType("yml")
+	resultYml := parseYml()
+	var configReader = strings.NewReader(resultYml)
+	err := v.ReadConfig(configReader)
+	return v, err
 }
 
 func parseYml() string {
