@@ -13,8 +13,9 @@ env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/infra-tracing-sink
 on:
   workflow_dispatch:
-  release:
-    types: [ published ]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
@@ -43,8 +44,9 @@ jobs:
         run: |
           mkdir -p output
           go build -ldflags="-w -s" -o "./output/tracing-sink" -i ./main/
-          echo ${{ github.ref }} | sed "s/\//_/g" >> $GIT_VER
-          echo "code version: $GIT_VER"
+
+          echo `gv=${{ github.ref }} && echo ${gv##*/}` >> $GIT_VER
+          echo "code version: ${{ env.GIT_VER }}"
       - name: Login to Container Registry
         uses: docker/login-action@v1
         with:
