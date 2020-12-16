@@ -9,8 +9,9 @@ env:
   PUB_USER: ${{ secrets.MAVEN_USER_NAME }}
   PUB_PWD: ${{ secrets.MAVEN_USER_PWD }}
   GOARCH: amd64
-  GOOS=linux
-  BUILD_DATE=$(date +'%Y-%m-%d %H:%M:%S')
+  GOOS: linux
+  BUILD_DATE: $(date +'%Y-%m-%d %H:%M:%S')
+  IMAGE: ghcr.io/${{ github.repository_owner }}/infra-tracing-sink
 on:
   workflow_dispatch:
   release:
