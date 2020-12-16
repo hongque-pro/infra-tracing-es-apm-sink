@@ -12,8 +12,6 @@ env:
   GOOS: linux
   BUILD_DATE: $(date +'%Y-%m-%d %H:%M:%S')
   IMAGE: ghcr.io/${{ github.repository_owner }}/infra-tracing-sink
-  GIT_REF: $(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)
-  GIT_SHA: $(echo ${{ github.sha }} | cut -c1-7)
 on:
   workflow_dispatch:
   release:
@@ -62,8 +60,8 @@ jobs:
             org.opencontainers.image.authors=${{ github.repository_owner }}
             org.opencontainers.image.created=${{ env.BUILD_DATE }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ github.repository }}
-            org.opencontainers.image.description=Created from commit ${{ env.GIT_SHA }} and ref ${{ env.GIT_REF }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Created from commit ${{ github.sha }} and ref ${{ github.ref }}
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ env.GIT_REF }}
