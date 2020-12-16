@@ -57,7 +57,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./output/dockerfile
+          file: ./dockerfile
           tag_with_ref: true
           labels: |
             org.opencontainers.image.authors=${{ github.repository_owner }}
