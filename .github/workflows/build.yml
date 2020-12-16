@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p output
           go build -ldflags="-w -s" -o "./output/tracing-sink" -i ./main/
-          export GIT_VER=`echo ${{ github.ref }} | sed "s/\//_/g"`
+          echo ${{ github.ref }} | sed "s/\//_/g" >> $GIT_VER
           echo "code version: $GIT_VER"
       - name: Login to Container Registry
         uses: docker/login-action@v1
